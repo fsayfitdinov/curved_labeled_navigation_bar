@@ -21,6 +21,8 @@ class CurvedNavigationBar extends StatefulWidget {
   /// The color of the [CurvedNavigationBar] itself, default Colors.white.
   final Color color;
 
+  final Gradient? gradient;
+
   /// The background color of floating button, default same as [color] attribute.
   final Color? buttonBackgroundColor;
 
@@ -66,21 +68,21 @@ class CurvedNavigationBar extends StatefulWidget {
     this.animationDuration = const Duration(milliseconds: 600),
     this.iconPadding = 12.0,
     this.maxWidth,
+    this.gradient,
     double? height,
-  })  : letIndexChange = letIndexChange ?? ((_) => true),
-        assert(items.isNotEmpty),
-        assert(0 <= index && index < items.length),
-        assert(maxWidth == null || 0 <= maxWidth),
-        height = height ?? (Platform.isAndroid ? 70.0 : 80.0),
-        hasLabel = items.any((item) => item.label != null),
-        super(key: key);
+  }) : letIndexChange = letIndexChange ?? ((_) => true),
+       assert(items.isNotEmpty),
+       assert(0 <= index && index < items.length),
+       assert(maxWidth == null || 0 <= maxWidth),
+       height = height ?? (Platform.isAndroid ? 70.0 : 80.0),
+       hasLabel = items.any((item) => item.label != null),
+       super(key: key);
 
   @override
   CurvedNavigationBarState createState() => CurvedNavigationBarState();
 }
 
-class CurvedNavigationBarState extends State<CurvedNavigationBar>
-    with SingleTickerProviderStateMixin {
+class CurvedNavigationBarState extends State<CurvedNavigationBar> with SingleTickerProviderStateMixin {
   late double _startingPos;
   late int _endingIndex;
   late double _pos;
@@ -106,8 +108,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
         if ((endingPos - _pos).abs() < (_startingPos - _pos).abs()) {
           _icon = widget.items[_endingIndex].child;
         }
-        _buttonHide =
-            (1 - ((middle - _pos) / (_startingPos - middle)).abs()).abs();
+        _buttonHide = (1 - ((middle - _pos) / (_startingPos - middle)).abs()).abs();
       });
     });
   }
@@ -119,11 +120,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
       final newPosition = widget.index / _length;
       _startingPos = _pos;
       _endingIndex = widget.index;
-      _animationController.animateTo(
-        newPosition,
-        duration: widget.animationDuration,
-        curve: widget.animationCurve,
-      );
+      _animationController.animateTo(newPosition, duration: widget.animationDuration, curve: widget.animationCurve);
     }
     if (!_animationController.isAnimating) {
       _icon = widget.items[_endingIndex].child;
@@ -143,42 +140,32 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
       height: widget.height,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final maxWidth = min(
-              constraints.maxWidth, widget.maxWidth ?? constraints.maxWidth);
+          final maxWidth = min(constraints.maxWidth, widget.maxWidth ?? constraints.maxWidth);
           return Align(
-            alignment: textDirection == TextDirection.ltr
-                ? Alignment.bottomLeft
-                : Alignment.bottomRight,
+            alignment: textDirection == TextDirection.ltr ? Alignment.bottomLeft : Alignment.bottomRight,
             child: Container(
-              color: widget.backgroundColor,
+              decoration: BoxDecoration(color: widget.backgroundColor, gradient: widget.gradient),
               width: maxWidth,
               child: ClipRect(
-                clipper: NavCustomClipper(
-                  deviceHeight: MediaQuery.sizeOf(context).height,
-                ),
+                clipper: NavCustomClipper(deviceHeight: MediaQuery.sizeOf(context).height),
                 child: Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.bottomCenter,
                   children: <Widget>[
                     Positioned(
                       bottom: widget.height - 105.0,
-                      left: textDirection == TextDirection.rtl
-                          ? null
-                          : _pos * maxWidth,
-                      right: textDirection == TextDirection.rtl
-                          ? _pos * maxWidth
-                          : null,
+                      left: textDirection == TextDirection.rtl ? null : _pos * maxWidth,
+                      right: textDirection == TextDirection.rtl ? _pos * maxWidth : null,
                       width: maxWidth / _length,
                       child: Center(
                         child: Transform.translate(
                           offset: Offset(0, (_buttonHide - 1) * 80),
-                          child: Material(
-                            color: widget.buttonBackgroundColor ?? widget.color,
-                            type: MaterialType.circle,
-                            child: Padding(
-                              padding: EdgeInsets.all(widget.iconPadding),
-                              child: _icon,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: widget.buttonBackgroundColor ?? widget.color,
+                              shape: BoxShape.circle,
                             ),
+                            child: Padding(padding: EdgeInsets.all(widget.iconPadding), child: _icon),
                           ),
                         ),
                       ),
@@ -207,17 +194,18 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
                       child: SizedBox(
                         height: widget.height,
                         child: Row(
-                          children: widget.items.map((item) {
-                            return NavBarItemWidget(
-                              onTap: _buttonTap,
-                              position: _pos,
-                              length: _length,
-                              index: widget.items.indexOf(item),
-                              child: Center(child: item.child),
-                              label: item.label,
-                              labelStyle: item.labelStyle,
-                            );
-                          }).toList(),
+                          children:
+                              widget.items.map((item) {
+                                return NavBarItemWidget(
+                                  onTap: _buttonTap,
+                                  position: _pos,
+                                  length: _length,
+                                  index: widget.items.indexOf(item),
+                                  child: Center(child: item.child),
+                                  label: item.label,
+                                  labelStyle: item.labelStyle,
+                                );
+                              }).toList(),
                         ),
                       ),
                     ),
@@ -246,11 +234,7 @@ class CurvedNavigationBarState extends State<CurvedNavigationBar>
     setState(() {
       _startingPos = _pos;
       _endingIndex = index;
-      _animationController.animateTo(
-        newPosition,
-        duration: widget.animationDuration,
-        curve: widget.animationCurve,
-      );
+      _animationController.animateTo(newPosition, duration: widget.animationDuration, curve: widget.animationCurve);
     });
   }
 }
